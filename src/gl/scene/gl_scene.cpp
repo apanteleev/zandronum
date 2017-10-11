@@ -111,17 +111,23 @@ void gl_ParseDefs();
 //-----------------------------------------------------------------------------
 angle_t FGLRenderer::FrustumAngle()
 {
-	float tilt= fabs(mAngles.Pitch);
+	OpenGLFrameBuffer* GLTarget = static_cast<OpenGLFrameBuffer*>(screen);
+	float ratio = float(GLTarget->GetWidth()) / float(GLTarget->GetHeight());
+	float TanVFov = tanf(DEG2RAD(mCurrentFoV * 0.5f)) / 1.6f;
+	float TanHFov = TanVFov * ratio;
 
-	// If the pitch is larger than this you can look all around at a FOV of 90°
-	if (tilt>46.0f) return 0xffffffff;
+	float tilt = fabs(mAngles.Pitch);
+	float SinTilt = sinf(DEG2RAD(tilt));
+	float CosTilt = cosf(DEG2RAD(tilt));
 
-	// ok, this is a gross hack that barely works...
-	// but at least it doesn't overestimate too much...
-	double floatangle=2.0+(45.0+((tilt/1.9)))*mCurrentFoV*48.0/BaseRatioSizes[WidescreenRatio][3]/90.0;
-	angle_t a1 = FLOAT_TO_ANGLE(floatangle);
-	if (a1>=ANGLE_180) return 0xffffffff;
-	return a1;
+	float x = TanHFov;
+	float z = CosTilt - SinTilt * TanVFov;
+
+	if(z <= 0.f) return 0xffffffff;
+
+	float viewangle = RAD2DEG(atan2f(x, z));
+	
+	return FLOAT_TO_ANGLE(viewangle);
 }
 
 //-----------------------------------------------------------------------------
@@ -1051,6 +1057,8 @@ void FGLRenderer::RenderView (player_t* player)
 	{
 		fovratio = ratio;
 	}
+	ratio = float(GLTarget->GetWidth()) / float(GLTarget->GetHeight());
+	fovratio = 1.6f;
 
 	SetFixedColormap (player);
 

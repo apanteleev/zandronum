@@ -1327,7 +1327,6 @@ CCMD(clean)
 bool V_DoModeSetup (int width, int height, int bits)
 {
 	DFrameBuffer *buff = I_SetMode (width, height, screen);
-	int cx1, cx2;
 
 	if (buff == NULL)
 	{
@@ -1341,44 +1340,14 @@ bool V_DoModeSetup (int width, int height, int bits)
 	// Load fonts now so they can be packed into textures straight away,
 	// if D3DFB is being used for the display.
 	FFont::StaticPreloadFonts();
-
-	V_CalcCleanFacs(320, 200, width, height, &CleanXfac, &CleanYfac, &cx1, &cx2);
-
+	
+	int scale = MIN(width / 320, height / 200);
+	CleanXfac = scale;
+	CleanYfac = scale;
+	CleanXfac_1 = MAX(CleanXfac - 1, 1);
+	CleanYfac_1 = MAX(CleanYfac - 1, 1);
 	CleanWidth = width / CleanXfac;
 	CleanHeight = height / CleanYfac;
-	assert(CleanWidth >= 320);
-	assert(CleanHeight >= 200);
-
-	if (width < 800 || width >= 960)
-	{
-		if (cx1 < cx2)
-		{
-			// Special case in which we don't need to scale down.
-			CleanXfac_1 = 
-			CleanYfac_1 = cx1;
-		}
-		else
-		{
-			CleanXfac_1 = MAX(CleanXfac - 1, 1);
-			CleanYfac_1 = MAX(CleanYfac - 1, 1);
-			// On larger screens this is not enough so make sure it's at most 3/4 of the screen's width
-			while (CleanXfac_1 * 320 > screen->GetWidth()*3/4 && CleanXfac_1 > 2)
-			{
-				CleanXfac_1--;
-				CleanYfac_1--;
-			}
-		}
-		CleanWidth_1 = width / CleanXfac_1;
-		CleanHeight_1 = height / CleanYfac_1;
-	}
-	else // if the width is between 800 and 960 the ratio between the screensize and CleanXFac-1 becomes too large.
-	{
-		CleanXfac_1 = CleanXfac;
-		CleanYfac_1 = CleanYfac;
-		CleanWidth_1 = CleanWidth;
-		CleanHeight_1 = CleanHeight;
-	}
-
 
 	DisplayWidth = width;
 	DisplayHeight = height;
@@ -1398,48 +1367,12 @@ bool V_DoModeSetup (int width, int height, int bits)
 
 void V_CalcCleanFacs (int designwidth, int designheight, int realwidth, int realheight, int *cleanx, int *cleany, int *_cx1, int *_cx2)
 {
-	int ratio;
-	int cwidth;
-	int cheight;
-	int cx1, cy1, cx2, cy2;
-
-	ratio = CheckRatio(realwidth, realheight);
-	if (ratio & 4)
-	{
-		cwidth = realwidth;
-		cheight = realheight * BaseRatioSizes[ratio][3] / 48;
-	}
-	else
-	{
-		cwidth = realwidth * BaseRatioSizes[ratio][3] / 48;
-		cheight = realheight;
-	}
-	// Use whichever pair of cwidth/cheight or width/height that produces less difference
-	// between CleanXfac and CleanYfac.
-	cx1 = MAX(cwidth / designwidth, 1);
-	cy1 = MAX(cheight / designheight, 1);
-	cx2 = MAX(realwidth / designwidth, 1);
-	cy2 = MAX(realheight / designheight, 1);
-	if (abs(cx1 - cy1) <= abs(cx2 - cy2))
-	{ // e.g. 640x360 looks better with this.
-		*cleanx = cx1;
-		*cleany = cy1;
-	}
-	else
-	{ // e.g. 720x480 looks better with this.
-		*cleanx = cx2;
-		*cleany = cy2;
-	}
-
-	if (*cleanx > 1 && *cleany > 1 && *cleanx != *cleany)
-	{
-		if (*cleanx < *cleany)
-			*cleany = *cleanx;
-		else
-			*cleanx = *cleany;
-	}
-	if (_cx1 != NULL)	*_cx1 = cx1;
-	if (_cx2 != NULL)	*_cx2 = cx2;
+	int scale = MIN(realwidth / designwidth, realheight / designheight);
+	*cleanx = scale;
+	*cleany = scale;
+	
+	if (_cx1 != NULL)	*_cx1 = 0;
+	if (_cx2 != NULL)	*_cx2 = 0;
 }
 
 bool IVideo::SetResolution (int width, int height, int bits)
@@ -1604,7 +1537,7 @@ void V_Init2()
 	}
 
 	I_InitGraphics();
-	I_ClosestResolution (&width, &height, 8);
+	//I_ClosestResolution (&width, &height, 8);
 
 	if (!Video->SetResolution (width, height, 8))
 		I_FatalError ("Could not set resolution to %d x %d x %d", width, height, 8);

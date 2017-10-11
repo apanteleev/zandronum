@@ -101,7 +101,9 @@ void FGLRenderer::DrawPSprite (player_t * player,pspdef_t *psp,fixed_t sx, fixed
 	int vh = viewheight;
 
 	// calculate edges of the shape
-	scalex = xratio[WidescreenRatio] * vw / 320;
+	//scalex = xratio[WidescreenRatio] * vw / 320;
+	scale = ((SCREENHEIGHT*vw) / SCREENWIDTH) / 200.0f;
+	scalex = fixed_t(scale * FRACUNIT);
 
 	tx = sx - ((160 + tex->GetScaledLeftOffset(GLUSE_PATCH))<<FRACBITS);
 	x1 = (FixedMul(tx, scalex)>>FRACBITS) + (vw>>1);
@@ -129,7 +131,6 @@ void FGLRenderer::DrawPSprite (player_t * player,pspdef_t *psp,fixed_t sx, fixed
 		}
 	}
 
-	scale = ((SCREENHEIGHT*vw)/SCREENWIDTH) / 200.0f;    
 	y1 = viewwindowy + (vh >> 1) - (int)(((float)texturemid / (float)FRACUNIT) * scale);
 	y2 = y1 + (int)((float)tex->TextureHeight(GLUSE_PATCH) * scale) + 1;
 
