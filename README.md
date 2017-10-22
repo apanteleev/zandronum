@@ -1,6 +1,15 @@
 Welcome to Zandronum!
 =====================
 
+Fork description
+----------------
+
+This is a fork of the Zandronum 3.0 engine for Doom II and similar games that is originally hosted on [BitBucket](https://bitbucket.org/Torr_Samaho/zandronum).
+
+The purpose of this fork is to implement improvements that we personally find useful. No compatibility or portability of the changes to any platforms is promised. Nothing is guaranteed.
+
+The fork and changes are covered by the original Zandronum license found at the bottom of this page.
+
 A continuation of Skulltag.
 ---------------------------
 
