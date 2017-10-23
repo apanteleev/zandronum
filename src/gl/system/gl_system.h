@@ -66,27 +66,28 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+#ifdef _WIN32
+#define DWORD WINDOWS_DWORD	
+#endif
+
+#define GLEW_STATIC
+#include <GL/glew.h>
+#include <GL/wglew.h>
+
 //GL headers
 #if defined(__APPLE__)
-#include <GL/glew.h>
 #include <OpenGL/OpenGL.h>
 #elif defined(__unix__)
-#include <GL/glew.h>
-#include "gl/api/glext.h"
 #else // !__APPLE__ && !__unix__
 #include <GL/gl.h>
 #include <GL/glu.h>
-#include "gl/api/glext.h"
 #endif
-#include "gl/api/gl_api.h"
 
 #ifdef _WIN32
-#define DWORD WINDOWS_DWORD	// I don't want to depend on this throughout the GL code!
-#include "gl/api/wglext.h"
-#ifndef __WINE__
 #undef DWORD
 #endif
-#else
+
+#ifndef _WIN32
 typedef unsigned char 	byte;
 typedef float		FLOAT;
 template <typename T>

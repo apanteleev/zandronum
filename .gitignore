@@ -197,3 +197,5 @@ zlib/Debug
 zlib/Release
 zlib/*.user
 zlib/*.a
+
+!src/gl/glew-2.1.0/lib/Release
