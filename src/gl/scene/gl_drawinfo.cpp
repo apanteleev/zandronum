@@ -788,54 +788,14 @@ void GLDrawList::Draw(int pass)
 // Sorting the drawitems first by texture and then by light level.
 //
 //==========================================================================
-static GLDrawList * sortinfo;
 
 static int __cdecl dicmp (const void *a, const void *b)
 {
-	const GLDrawItem * di[2];
-	FMaterial * tx[2];
-	int lights[2];
-	int clamp[2];
-	//colormap_t cm[2];
-	di[0]=(const GLDrawItem *)a;
-	di[1]=(const GLDrawItem *)b;
-
-	for(int i=0;i<2;i++)
-	{
-		switch(di[i]->rendertype)
-		{
-		case GLDIT_FLAT:
-		{
-			GLFlat * f=&sortinfo->flats[di[i]->index];
-			tx[i]=f->gltexture;
-			lights[i]=f->lightlevel;
-			clamp[i] = 0;
-		}
-		break;
-
-		case GLDIT_WALL:
-		{
-			GLWall * w=&sortinfo->walls[di[i]->index];
-			tx[i]=w->gltexture;
-			lights[i]=w->lightlevel;
-			clamp[i] = w->flags & 3;
-		}
-		break;
-
-		case GLDIT_SPRITE:
-		{
-			GLSprite * s=&sortinfo->sprites[di[i]->index];
-			tx[i]=s->gltexture;
-			lights[i]=s->lightlevel;
-			clamp[i] = 4;
-		}
-		break;
-		case GLDIT_POLY: break;
-		}
-	}
-	if (tx[0]!=tx[1]) return tx[0]-tx[1];
-	if (clamp[0]!=clamp[1]) return clamp[0]-clamp[1];	// clamping forces different textures.
-	return lights[0]-lights[1];
+	const GLDrawItem* dia = (GLDrawItem*)a;
+	const GLDrawItem* dib = (GLDrawItem*)b;
+	
+	if (dia->texture != dib->texture) return dia->texture - dib->texture;
+	return dia->sortkey - dib->sortkey;
 }
 
 
@@ -843,7 +803,46 @@ void GLDrawList::Sort()
 {
 	if (drawitems.Size()!=0 && gl_sort_textures)
 	{
-		sortinfo=this;
+		for (int index = 0; index < drawitems.Size(); index++)
+		{
+			GLDrawItem& di = drawitems[index];
+			int lightlevel = 0;
+			int clamp = 0;
+
+			switch (di.rendertype)
+			{
+			case GLDIT_FLAT:
+			{
+				GLFlat& f = flats[di.index];
+				di.texture = f.gltexture;
+				lightlevel = f.lightlevel;
+				clamp = 0;
+			}
+			break;
+
+			case GLDIT_WALL:
+			{
+				GLWall& w = walls[di.index];
+				di.texture = w.gltexture;
+				lightlevel = w.lightlevel;
+				clamp = w.flags & 3;
+			}
+			break;
+
+			case GLDIT_SPRITE:
+			{
+				GLSprite& s = sprites[di.index];
+				di.texture = s.gltexture;
+				lightlevel = s.lightlevel;
+				clamp = 4;
+			}
+			break;
+			case GLDIT_POLY: break;
+			}
+
+			di.sortkey = lightlevel << 4 | clamp;
+		}
+
 		qsort(&drawitems[0], drawitems.Size(), sizeof(drawitems[0]), dicmp);
 	}
 }

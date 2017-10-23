@@ -62,10 +62,12 @@ enum Drawpasses
 
 struct GLDrawItem
 {
+	FMaterial* texture;
 	GLDrawItemType rendertype;
 	int index;
+	int sortkey;
 
-	GLDrawItem(GLDrawItemType _rendertype,int _index) : rendertype(_rendertype),index(_index) {}
+	GLDrawItem(GLDrawItemType _rendertype,int _index) : rendertype(_rendertype),index(_index),texture(nullptr),sortkey(0) {}
 };
 
 struct SortNode
